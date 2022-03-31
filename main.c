@@ -28,5 +28,13 @@ int main() {
         pop_heap(&heap);
         print_heap(heap);
     }
+
+    int *pointers[10];
+    for(int i=0; i<10; i++) {
+        pointers[i] = &numbers[i];
+    }
+    printf("heapify\n");
+    struct Heap heap2 = heapify((void *) pointers, 10, &cmp_int);
+    print_heap(heap2);
     return 0;
 }

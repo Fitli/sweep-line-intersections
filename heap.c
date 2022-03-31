@@ -4,7 +4,28 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "heap.h"
+
+
+void push_down(struct Heap *heap, int pos) {
+    void *elem = heap->memory[pos];
+    int next;
+    while(2*pos <= heap->num_elems) {
+        if (2*pos == heap->num_elems || heap->cmp_func(heap->memory[2*pos], heap->memory[2*pos + 1]) >= 0) {
+            next = 2*pos;
+        }
+        else {
+            next = 2*pos + 1;
+        }
+        if(heap->cmp_func(heap->memory[next], elem) <= 0) {
+            break;
+        }
+        heap->memory[pos] = heap->memory[next];
+        pos = next;
+    }
+    heap->memory[pos] = elem;
+}
 
 struct Heap create_empty_heap(int max_size, int (*cmp_func)(void*, void*)) {
     struct Heap new;
@@ -16,6 +37,27 @@ struct Heap create_empty_heap(int max_size, int (*cmp_func)(void*, void*)) {
         fprintf(stderr, "Allocation error\n");
     }
     return new;
+}
+
+struct Heap heapify(void** array, int len, int (*cmp_func)(void*, void*)) {
+    struct Heap heap;
+    heap.max_size = 1;
+    while(heap.max_size <= len) {
+        heap.max_size *= 2;
+    }
+    heap.memory = malloc(heap.max_size * sizeof(void *));
+    if (heap.memory == NULL) {
+        fprintf(stderr, "Allocation error\n");
+    }
+    heap.num_elems = len;
+    heap.cmp_func = cmp_func;
+    memcpy(heap.memory+1, array, len*sizeof (void *));
+    for(int start_pos = heap.max_size/4; start_pos > 0; start_pos /= 2) {
+        for(int pos = start_pos; pos < start_pos*2; pos++) {
+            push_down(&heap, pos);
+        }
+    }
+    return heap;
 }
 
 int add_element_heap(struct Heap *heap, void *elem) {
@@ -42,22 +84,8 @@ int add_element_heap(struct Heap *heap, void *elem) {
 
 void *pop_heap(struct Heap *heap) {
     void* ret = heap->memory[1];
-    int pos = 1;
-    void *last_elem = heap->memory[heap->num_elems];
-    int next;
-    while(2*pos <= heap->num_elems) {
-        if (2*pos == heap->num_elems || heap->cmp_func(heap->memory[2*pos], heap->memory[2*pos + 1]) >= 0) {
-            next = 2*pos;
-        }
-        else {
-            next = 2*pos + 1;
-        }
-        if(heap->cmp_func(heap->memory[next], last_elem) <= 0) {
-            break;
-        }
-        heap->memory[pos] = heap->memory[next];
-        pos = next;
-    }
-    heap->memory[pos] = last_elem;
+    heap->memory[1] = heap->memory[heap->num_elems];
     heap->num_elems--;
+    push_down(heap, 1);
+    return ret;
 }
