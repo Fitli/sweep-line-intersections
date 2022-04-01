@@ -1,8 +1,12 @@
 #include <stdio.h>
 #include "heap.h"
 #include "segment.h"
+#include "binsearchtree.h"
 
 int cmp_int(void *a, void *b) {
+    return *((int*) a) - *((int *) b);
+}
+int cmp_int_tmp(void *a, void *b, void* tmp) {
     return *((int*) a) - *((int *) b);
 }
 
@@ -14,10 +18,45 @@ void print_heap(struct Heap heap) {
     printf("]\n");
 }
 
-int main() {
-    
+void print_tree(struct BSTNode *root) {
+    if(root == NULL) {
+        printf("- ");
+        return;
+    }
+    print_tree(root->left);
+    printf("%d ", *(int*) root->data);
+    print_tree(root->right);
+}
 
-    return 0;
+void test_tree() {
+    printf("create tree\n");
+    struct BST tree = create_empty_bst(&cmp_int_tmp);
+    print_tree(tree.root);
+    printf("\n");
+
+    int numbers[10] = {3, 4, 7, 1, 2, 6, 3, 5, 9, 0};
+    for(int i=0; i<10; i++) {
+        printf("add %d\n", numbers[i]);
+        add_node(&tree, &numbers[i], NULL);
+        print_tree(tree.root);
+        printf("\n");
+    }
+
+
+    int a = 4;
+    printf("find 4\n");
+    struct BSTNode *node = find_node(&tree, &a, NULL);
+    node == NULL ? printf("NULL\n") : printf("%d\n", *(int*) node->data);
+
+    int b = 8;
+    printf("find 8\n");
+    struct BSTNode *node2 = find_node(&tree, &b, NULL);
+    node2 == NULL ? printf("NULL\n") : printf("%d\n", *(int*) node2->data);
+
+    printf("delete 4\n");
+    remove_node(&tree, node);
+    print_tree(tree.root);
+    printf("\n");
 }
 
 void test_heap() {
@@ -88,4 +127,10 @@ void test_intersection () {
 
     struct Point insct = intersection(a, b);
     printf("intersectin[%d, %d], type %d\n", insct.x, insct.y, insct.type);
+}
+
+int main() {
+    test_tree();
+
+    return 0;
 }
