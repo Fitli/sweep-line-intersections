@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "binsearchtree.h"
+#include "segment.h"
 
 struct BST create_empty_bst(int (*cmp_func)(void*, void*, void*)) {
     struct BST new;
@@ -13,11 +14,11 @@ struct BST create_empty_bst(int (*cmp_func)(void*, void*, void*)) {
     return new;
 }
 
-int add_node(struct BST* tree, void *data, void *temp_state) {
+struct BSTNode *add_node(struct BST* tree, void *data, void *temp_state) {
     struct BSTNode *new_node = malloc(sizeof(struct BSTNode));
     if(new_node == NULL) {
         fprintf(stderr, "Allocation error\n");
-        return 0;
+        return NULL;
     }
     new_node->data = data;
     // we will insert new node as a leaf
@@ -26,7 +27,7 @@ int add_node(struct BST* tree, void *data, void *temp_state) {
     if (tree->root == NULL) {
         tree->root = new_node;
         new_node->parent = NULL;
-        return 1;
+        return new_node;
     }
     struct BSTNode *cur_node = tree->root;
     while (1) {
@@ -35,7 +36,7 @@ int add_node(struct BST* tree, void *data, void *temp_state) {
                 cur_node->left = new_node;
                 new_node->parent = cur_node;
                 new_node->side = LEFT;
-                return 1;
+                return new_node;
             }
             else {
                 cur_node = cur_node->left;
@@ -46,7 +47,7 @@ int add_node(struct BST* tree, void *data, void *temp_state) {
                 cur_node->right = new_node;
                 new_node->parent = cur_node;
                 new_node->side = RIGHT;
-                return 1;
+                return new_node;
             }
             else {
                 cur_node = cur_node->right;
@@ -72,6 +73,119 @@ struct BSTNode *find_node(struct BST *tree, void *data, void *temp_state) {
     return NULL;
 }
 
+struct BSTNode *find_prev(struct BSTNode *node) {
+    if(node->left != NULL) {
+        node = node->left;
+        while (node->right != NULL) {
+            node = node->right;
+        }
+        return node;
+    } else {
+        while (node->parent != NULL && node->side == LEFT) {
+            node = node->parent;
+        }
+        if(node->parent == NULL) {
+            return NULL;
+        }
+        return node->parent;
+    }
+}
+
+struct BSTNode *find_next(struct BSTNode *node) {
+    if(node->right != NULL) {
+        node = node->right;
+        while (node->left != NULL) {
+            node = node->left;
+        }
+        return node;
+    } else {
+        while (node->parent != NULL && node->side == RIGHT) {
+            node = node->parent;
+        }
+        if(node->parent == NULL) {
+            return NULL;
+        }
+        return node->parent;
+    }
+}
+
+void swap_parent_child(struct BST *tree, struct BSTNode* parent, struct BSTNode* child) {
+    if(parent->parent == NULL) {
+        tree->root = child;
+    } else {
+        parent->side == LEFT ? (parent->parent->left = child) : (parent->parent->right = child);
+    }
+    if(child -> left != NULL) {
+        child->left->parent = parent;
+    }
+    if(child -> right != NULL) {
+        child->right->parent = parent;
+    }
+
+    struct BSTNode old_parent = *parent;
+    struct BSTNode old_child = *child;
+    if (old_child.side == LEFT) {
+        child->left = parent;
+        child->right = old_parent.right;
+        if(child->right != NULL) {
+            child->right->parent = child;
+        }
+    }
+    else {
+        child->right = parent;
+        child->left = old_parent.left;
+        if(child->left != NULL) {
+            child->left->parent = child;
+        }
+    }
+    child->parent = old_parent.parent;
+    child->side = old_parent.side;
+
+    parent->parent = child;
+    parent->side = old_child.side;
+    parent->left = old_child.left;
+    parent->right = old_child.right;
+}
+
+void swap_nodes(struct BST *tree, struct BSTNode* a, struct BSTNode* b) {
+    if (a->parent == b){
+        swap_parent_child(tree, b, a);
+        return;
+    }
+    if (b->parent == a){
+        swap_parent_child(tree, a, b);
+        return;
+    }
+    if (a->parent != NULL)
+        a->side == LEFT ? (a->parent->left = b) : (a->parent->right = b);
+    else
+        tree->root = b;
+    if (a->left != NULL)
+        a->left->parent = b;
+    if (a->right != NULL)
+        a->right->parent = b;
+
+    if (b->parent != NULL)
+        b->side == LEFT ? (b->parent->left = a) : (b->parent->right = a);
+    else
+        tree->root = a;
+    if (b->left != NULL)
+        b->left->parent = a;
+    if (b->right != NULL)
+        b->right->parent = a;
+
+    struct BSTNode helper = *a;
+    a->parent = b->parent;
+    a->side = b->side;
+    a->left = b->left;
+    a->right = b->right;
+
+    b->parent = helper.parent;
+    b->side = helper.side;
+    b->left = helper.left;
+    b->right = helper.right;
+}
+
 void remove_node(struct BST *tree, struct BSTNode* node) {
     struct BSTNode *replace_with;
     int replace_node = 0;
@@ -92,10 +206,6 @@ void remove_node(struct BST *tree, struct BSTNode* node) {
     }
 
     if(replace_node) {
-        if(replace_with != NULL) {
-            replace_with->parent = node->parent;
-            replace_with->side = node->side;
-        }
         if(node->parent == NULL) {
             tree->root = replace_with;
         }
@@ -105,6 +215,10 @@ void remove_node(struct BST *tree, struct BSTNode* node) {
         else if (node->side == RIGHT) {
             node->parent->right = replace_with;
         }
+        if(replace_with != NULL) {
+            replace_with->parent = node->parent;
+            replace_with->side = node->side;
+        }
         free(node);
     }
     else {
@@ -112,7 +226,8 @@ void remove_node(struct BST *tree, struct BSTNode* node) {
         while (next->left != NULL) {
             next = next->left;
         }
-        node->data = next->data;
-        remove_node(tree, next);
+        swap_nodes(tree, node, next);
+        remove_node(tree, node);
     }
 }
+

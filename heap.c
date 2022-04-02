@@ -89,3 +89,7 @@ void *pop_heap(struct Heap *heap) {
     push_down(heap, 1);
     return ret;
 }
+
+void destroy_heap(struct Heap *heap) {
+    free(heap->memory);
+}

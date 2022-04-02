@@ -24,9 +24,11 @@ struct BST {
 };
 
 struct BST create_empty_bst(int (*cmp_func)(void*, void*, void*));
-int add_node(struct BST* tree, void *data, void *temp_state);
+struct BSTNode *add_node(struct BST* tree, void *data, void *temp_state);
 struct BSTNode *find_node(struct BST *tree, void *data, void *temp_state);
 void remove_node(struct BST *tree, struct BSTNode* node);
-
+struct BSTNode *find_prev(struct BSTNode *node);
+struct BSTNode *find_next(struct BSTNode *node);
+void swap_nodes(struct BST *tree, struct BSTNode* a, struct BSTNode* b);
 
 #endif //SWEEP_LINE_INTERSECTIONS_BINSEARCHTREE_H
