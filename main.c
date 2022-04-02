@@ -2,7 +2,8 @@
 #include <stdlib.h>
 #include "heap.h"
 #include "segment.h"
-#include "binsearchtree.h"
+//#include "binsearchtree.h"
+#include "rbtree.h"
 #include "tests.h"
 
 int points_by_x(void *a, void *b) {
