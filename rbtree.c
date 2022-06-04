@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "rbtree.h"
-#include "segment.h"
 
 struct BST create_empty_bst(int (*cmp_func)(void*, void*, void*)) {
     struct BST new;
@@ -63,10 +62,9 @@ void rotate_right(struct BST *tree, struct BSTNode *pivot) {
 }
 
 void rebalance_insert(struct BST *tree, struct BSTNode *new_node) {
-    struct BSTNode *parent = NULL, *sibling = NULL, *grandpa = NULL, *uncle = NULL;
+    struct BSTNode *parent = NULL, *grandpa = NULL, *uncle = NULL;
     parent = new_node->parent;
     if (parent != NULL){
-        sibling = (new_node->side == LEFT) ? parent->right : parent->left;
         grandpa = parent->parent;
     }
     if (grandpa != NULL)
@@ -99,7 +97,6 @@ void rebalance_insert(struct BST *tree, struct BSTNode *new_node) {
         return;
     }
     // I6 - outer grandchild
-    struct BSTNode old_p = *parent;
     if(parent->side == LEFT) {
         rotate_right(tree, parent);
     } else {
@@ -320,7 +317,9 @@ void rebalance_delete(struct BST *tree, struct BSTNode* node) {
         return;
     }
     //R5
-    if(node->side == LEFT && sibling->left->color == RED && sibling->right->color == BLACK) {
+    if(node->side == LEFT && sibling &&
+       sibling->right && sibling->left->color == RED &&
+       (!sibling->left || sibling->right->color == BLACK)) {
         struct BSTNode* niece = sibling->left;
         rotate_right(tree, niece);
         niece->color = BLACK;
@@ -328,7 +327,9 @@ void rebalance_delete(struct BST *tree, struct BSTNode* node) {
         rebalance_delete(tree, node);
         return;
     }
-    if(node->side == RIGHT && sibling->right->color == RED && sibling->left->color == BLACK) {
+    if(node->side == RIGHT && sibling &&
+       sibling->right && sibling->right->color == RED &&
+       (!sibling->left || sibling->left->color == BLACK)) {
         struct BSTNode* niece = sibling->right;
         rotate_left(tree, niece);
         niece->color = BLACK;
@@ -355,8 +356,6 @@ void rebalance_delete(struct BST *tree, struct BSTNode* node) {
 
 void remove_node(struct BST *tree, struct BSTNode* node) {
     struct BSTNode* parent = node->parent;
-    struct BSTNode* lchilg = node->left;
-    struct BSTNode* rchild = node->right;
 
     struct BSTNode *replace_with;
     int replace_node = 0;
@@ -377,7 +376,7 @@ void remove_node(struct BST *tree, struct BSTNode* node) {
         replace_node = 1;
     }
 
-    if(replace_node) { //TODO
+    if(replace_node) {
         if(node->parent == NULL) {
             tree->root = replace_with;
         }

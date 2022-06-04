@@ -15,8 +15,8 @@ enum Type {
 };
 
 struct Point {
-    int x;
-    int y;
+    double x;
+    double y;
     enum Type type;
     struct Segment *segments_covered[2];
 };

@@ -41,7 +41,7 @@ void print_tree_segments(struct BSTNode *root) {
     }
     print_tree_segments(root->left);
     struct Segment* segment = root->data;
-    printf("(%d %d %d %d)", segment->start.x, segment->start.y, segment->end.x, segment->end.y);
+    printf("(%lf %lf %lf %lf)", segment->start.x, segment->start.y, segment->end.x, segment->end.y);
     print_tree_segments(root->right);
 }
 
@@ -151,5 +151,5 @@ void test_intersection() {
     b.end.y = 0;
 
     struct Point insct = intersection(&a, &b);
-    printf("intersectin[%d, %d], type %d\n", insct.x, insct.y, insct.type);
+    printf("intersectin[%lf, %lf], type %d\n", insct.x, insct.y, insct.type);
 }

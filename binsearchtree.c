@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "binsearchtree.h"
-#include "segment.h"
 
 struct BST create_empty_bst(int (*cmp_func)(void*, void*, void*)) {
     struct BST new;
