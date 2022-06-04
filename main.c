@@ -7,9 +7,18 @@
 #include "tests.h"
 
 int points_by_x(void *a, void *b) {
-    if(((struct Point*) a)->x < ((struct Point*) b)->x) {
+    struct Point* point_a = (struct Point*) a;
+    struct Point* point_b = (struct Point*) b;
+    if(point_a->x == point_b->x) {
+        if (point_a->y <= point_b->y) {
+            return 1;
+        }
+        else {
+            return -1;
+        }
+    } else if(point_a->x < point_b->x) {
         return 1;
-    } else if (((struct Point*) a)->x > ((struct Point*) b)->x) {
+    } else if (point_a->x > point_b->x) {
         return -1;
     }
     return 0;
@@ -25,28 +34,12 @@ int segments_by_y(void *a, void *b, void *x) {
     return 0;
 }
 
-void check_intersection(struct Segment* seg1, struct Segment* seg2,
-                        int *intersect_cap, int *intersect_num,
-                        struct Point **intersections, struct Heap *point_heap) {
-    struct Point intersec = intersection(seg1, seg2);
-    if(intersec.type == INTERSECTION) {
-        if (*intersect_cap == *intersect_num){
-            *intersect_cap *= 2;
-            *intersections = realloc(*intersections, *intersect_cap*sizeof(struct Point));
-        }
-
-        //check if the intersection isn't already found
-        int pos = (*intersect_num) - 1;
-        while (pos >=0 && (*intersections + pos)->x == intersec.x) {
-            if((*intersections + pos)->y == intersec.y) {
-                return;
-            }
-            pos--;
-        }
-
-        *(*intersections + *intersect_num) = intersec;
-        add_element_heap(point_heap, *intersections + *intersect_num);
-        (*intersect_num)++;
+void check_intersection(double x_position, struct Segment* seg1, struct Segment* seg2,
+                        struct Heap *point_heap) {
+    struct Point *intersec = malloc(sizeof(struct Point));
+    *intersec = intersection(seg1, seg2);
+    if(intersec->type == INTERSECTION && intersec->x >= x_position) {
+        add_element_heap(point_heap, intersec);
     }
 
 }
@@ -77,49 +70,65 @@ void find_intersections(const char* filename) {
     int intersect_num = 0;
     struct Point *intersections = malloc(intersect_cap * sizeof(struct Point *));
 
+    struct Point last_point;
+    int first_run = 1;
     while(point_heap.num_elems > 0) {
-        //print_tree_segments(segmentBST.root);
-        //printf("\n");
         struct Point *point = pop_heap(&point_heap);
+        if(first_run == 0 && (point->x == last_point.x) && (point->y == last_point.y)) {
+            first_run = 0;
+            last_point = *point;
+            continue;
+        }
+        first_run = 0;
+        last_point = *point;
+
         if (point->type == START) {
             struct BSTNode *node = add_node(&segmentBST, point->segments_covered[0], &point->x);
             struct Segment *segment = point->segments_covered[0];
 
-            //printf("adding %lf %lf %lf %lf\n", point->segments_covered[0]->start.x, point->segments_covered[0]->start.y, point->segments_covered[0]->end.x, point->segments_covered[0]->end.y);
+            printf("adding %lf %lf %lf %lf\n", point->segments_covered[0]->start.x, point->segments_covered[0]->start.y, point->segments_covered[0]->end.x, point->segments_covered[0]->end.y);
 
             segment->node = node;
 
             struct BSTNode *prev = find_prev(node);
             if(prev != NULL)
-                check_intersection((struct Segment*) prev->data, (struct Segment*)node->data, &intersect_cap, &intersect_num, &intersections, &point_heap);
+                check_intersection(point->x, (struct Segment*) prev->data, (struct Segment*)node->data, &point_heap);
 
             struct BSTNode *next = find_next(node);
             if(next != NULL)
-                check_intersection(node->data, next->data, &intersect_cap, &intersect_num, &intersections, &point_heap);
+                check_intersection(point->x, node->data, next->data, &point_heap);
         } else if (point->type == END) {
             struct BSTNode *node = point->segments_covered[0]->node;
             struct BSTNode *prev = find_prev(node);
             struct BSTNode *next = find_next(node);
-            //printf("removing %lf %lf %lf %lf\n", point->segments_covered[0]->start.x, point->segments_covered[0]->start.y, point->segments_covered[0]->end.x, point->segments_covered[0]->end.y);
+            printf("removing %lf %lf %lf %lf\n", point->segments_covered[0]->start.x, point->segments_covered[0]->start.y, point->segments_covered[0]->end.x, point->segments_covered[0]->end.y);
             point->segments_covered[0]->node = NULL;
             remove_node(&segmentBST, node);
             if(prev != NULL && next != NULL)
-                check_intersection(prev->data, next->data, &intersect_cap, &intersect_num, &intersections, &point_heap);
+                check_intersection(point->x, prev->data, next->data, &point_heap);
         } else { // INTERSECTION
             struct BSTNode *first = point->segments_covered[0]->node;
             struct BSTNode *second = point->segments_covered[1]->node;
 
             printf("found intersection %lf %lf\n", point->x, point->y);
+            if (intersect_cap == intersect_num){
+                intersect_cap *= 2;
+                intersections = realloc(intersections, intersect_cap*sizeof(struct Point));
+            }
+
+            intersections[intersect_num] = *point;
+            intersect_num++;
 
             swap_nodes(&segmentBST, first, second);
 
             struct BSTNode *prev = find_prev(second);
             if(prev != NULL)
-                check_intersection(prev->data, second->data, &intersect_cap, &intersect_num, &intersections, &point_heap);
+                check_intersection(point->x, prev->data, second->data, &point_heap);
 
             struct BSTNode *next = find_next(first);
             if(next != NULL)
-                check_intersection(first->data, next->data, &intersect_cap, &intersect_num, &intersections, &point_heap);
+                check_intersection(point->x, first->data, next->data, &point_heap);
+            free(point);
         }
     }
 

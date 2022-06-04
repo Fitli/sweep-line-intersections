@@ -318,8 +318,8 @@ void rebalance_delete(struct BST *tree, struct BSTNode* node) {
     }
     //R5
     if(node->side == LEFT && sibling &&
-       sibling->right && sibling->left->color == RED &&
-       (!sibling->left || sibling->right->color == BLACK)) {
+       sibling->left && sibling->left->color == RED &&
+       (!sibling->right || sibling->right->color == BLACK)) {
         struct BSTNode* niece = sibling->left;
         rotate_right(tree, niece);
         niece->color = BLACK;
