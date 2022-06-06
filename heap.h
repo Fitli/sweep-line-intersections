@@ -10,6 +10,7 @@ struct Heap {
     int num_elems;
     int (*cmp_func)(void*, void*); // returns positive number iff first value should be above second value
     void **memory;
+    int num_comparisons;
 };
 
 struct Heap create_empty_heap(int max_size, int (*cmp_func)(void*, void*));

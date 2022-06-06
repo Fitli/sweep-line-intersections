@@ -12,12 +12,14 @@ void push_down(struct Heap *heap, int pos) {
     void *elem = heap->memory[pos];
     int next;
     while(2*pos <= heap->num_elems) {
+        heap->num_comparisons++;
         if (2*pos == heap->num_elems || heap->cmp_func(heap->memory[2*pos], heap->memory[2*pos + 1]) >= 0) {
             next = 2*pos;
         }
         else {
             next = 2*pos + 1;
         }
+        heap->num_comparisons++;
         if(heap->cmp_func(heap->memory[next], elem) <= 0) {
             break;
         }
@@ -36,6 +38,7 @@ struct Heap create_empty_heap(int max_size, int (*cmp_func)(void*, void*)) {
     if (new.memory == NULL) {
         fprintf(stderr, "Allocation error\n");
     }
+    new.num_comparisons = 0;
     return new;
 }
 
@@ -51,6 +54,7 @@ struct Heap heapify(void** array, int len, int (*cmp_func)(void*, void*)) {
     }
     heap.num_elems = len;
     heap.cmp_func = cmp_func;
+    heap.num_comparisons = 0;
     memcpy(heap.memory+1, array, len*sizeof (void *));
     for(int start_pos = heap.max_size/4; start_pos > 0; start_pos /= 2) {
         for(int pos = start_pos; pos < start_pos*2; pos++) {
@@ -72,6 +76,7 @@ int add_element_heap(struct Heap *heap, void *elem) {
     }
     int pos = heap->num_elems + 1;
     int parent = pos/2;
+    heap->num_comparisons++;
     while(pos > 1 && heap->cmp_func(elem, heap->memory[parent]) > 0) {
         heap->memory[pos] = heap->memory[parent];
         pos = parent;

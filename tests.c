@@ -71,11 +71,11 @@ void test_tree() {
     node2 == NULL ? printf("NULL\n") : printf("%d\n", *(int*) node2->data);
 
     printf("find prev of %d\n", a);
-    struct BSTNode *prev = find_prev(node);
+    struct BSTNode *prev = find_prev(node, &tree);
     prev == NULL ? printf("NULL\n") : printf("%d\n", *(int*) prev->data);
 
     printf("find next of %d\n", a);
-    struct BSTNode *next = find_next(node);
+    struct BSTNode *next = find_next(node, &tree);
     next == NULL ? printf("NULL\n") : printf("%d\n", *(int*) next->data);
 
     printf("delete %d\n", a);

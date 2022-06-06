@@ -16,6 +16,9 @@ struct BST create_empty_bst(int (*cmp_func)(void*, void*, void*)) {
 void rotate_left(struct BST *tree, struct BSTNode *pivot) {
     struct BSTNode *p = pivot->parent;
     struct BSTNode *l = pivot->left;
+    if(p==NULL) {
+        //return;
+    }
     p->right = l;
     if (l != NULL) {
         l->parent = p;
@@ -40,6 +43,9 @@ void rotate_left(struct BST *tree, struct BSTNode *pivot) {
 void rotate_right(struct BST *tree, struct BSTNode *pivot) {
     struct BSTNode *p = pivot->parent;
     struct BSTNode *r = pivot->right;
+    if(p == NULL) {
+        //return;
+    }
     p->left = r;
     if (r != NULL) {
         r->parent = p;
@@ -81,7 +87,7 @@ void rebalance_insert(struct BST *tree, struct BSTNode *new_node) {
         return;
     }
     if (grandpa->color == BLACK && parent->color == RED && uncle && uncle->color == RED) { //I2
-        new_node->color = RED;
+        grandpa->color = RED;
         parent->color = BLACK;
         uncle->color = BLACK;
         rebalance_insert(tree, grandpa);
@@ -225,7 +231,7 @@ void swap_parent_child(struct BST *tree, struct BSTNode* parent, struct BSTNode*
     if (old_child.side == LEFT) {
         child->left = parent;
         child->right = old_parent.right;
-        if(child->right != NULL) {
+        if(old_parent.right != NULL) {
             child->right->parent = child;
         }
     }
@@ -295,21 +301,21 @@ void rebalance_delete(struct BST *tree, struct BSTNode* node) {
         return;
     }
     struct BSTNode* sibling = (node->side == LEFT) ? parent->right : parent->left;
-    if(parent->color == BLACK && sibling->color == BLACK &&
+    if(parent->color == BLACK && sibling && sibling->color == BLACK &&
             (sibling->left == NULL || sibling->left->color == BLACK) &&
             (sibling->right == NULL || sibling->right->color == BLACK)) { //R1
         sibling->color = RED;
         rebalance_delete(tree, parent);
         return;
     }
-    if(sibling->color == RED) { //R3
+    if(sibling && sibling->color == RED) { //R3
         rotate_left(tree, sibling);
         sibling->color = BLACK;
         parent->color = RED;
         rebalance_delete(tree, node);
         return;
     }
-    if(parent->color == RED && sibling->color == BLACK &&
+    if(parent->color == RED && sibling && sibling->color == BLACK &&
             (sibling->left == NULL || sibling->left->color == BLACK) &&
             (sibling->right == NULL || sibling->right->color == BLACK)) { //R4
         parent->color = BLACK;
@@ -394,7 +400,7 @@ void remove_node(struct BST *tree, struct BSTNode* node) {
         else if (node->color == BLACK){
             rebalance_delete(tree, node);
         }
-        free(node);
+        //free(node);
     }
     else {
         struct BSTNode *next = node->right;

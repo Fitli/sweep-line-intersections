@@ -10,6 +10,9 @@ struct BST create_empty_bst(int (*cmp_func)(void*, void*, void*)) {
     struct BST new;
     new.cmp_func = cmp_func;
     new.root = NULL;
+    new.num_moves = 0;
+    new.num_swaps = 0;
+    new.num_comparisons = 0;
     return new;
 }
 
@@ -30,6 +33,7 @@ struct BSTNode *add_node(struct BST* tree, void *data, void *temp_state) {
     }
     struct BSTNode *cur_node = tree->root;
     while (1) {
+        tree->num_comparisons++;
         if(tree->cmp_func(cur_node->data, new_node->data, temp_state) > 0) {
             if(cur_node->left == NULL) {
                 cur_node->left = new_node;
@@ -38,6 +42,7 @@ struct BSTNode *add_node(struct BST* tree, void *data, void *temp_state) {
                 return new_node;
             }
             else {
+                tree->num_moves++;
                 cur_node = cur_node->left;
             }
         }
@@ -49,6 +54,7 @@ struct BSTNode *add_node(struct BST* tree, void *data, void *temp_state) {
                 return new_node;
             }
             else {
+                tree->num_moves++;
                 cur_node = cur_node->right;
             }
         }
@@ -58,29 +64,35 @@ struct BSTNode *add_node(struct BST* tree, void *data, void *temp_state) {
 struct BSTNode *find_node(struct BST *tree, void *data, void *temp_state) {
     struct BSTNode *cur_node = tree->root;
     while(cur_node != NULL) {
+        tree->num_comparisons++;
         int cmp = tree->cmp_func(cur_node->data, data, temp_state);
         if (cmp == 0) {
             return cur_node;
         }
         else if (cmp > 0) {
+            tree->num_moves++;
             cur_node = cur_node->left;
         }
         else {
+            tree->num_moves++;
             cur_node = cur_node->right;
         }
     }
     return NULL;
 }
 
-struct BSTNode *find_prev(struct BSTNode *node) {
+struct BSTNode *find_prev(struct BSTNode *node, struct BST *tree) {
     if(node->left != NULL) {
+        tree->num_moves++;
         node = node->left;
         while (node->right != NULL) {
+            tree->num_moves++;
             node = node->right;
         }
         return node;
     } else {
         while (node->parent != NULL && node->side == LEFT) {
+            tree->num_moves++;
             node = node->parent;
         }
         if(node->parent == NULL) {
@@ -90,15 +102,18 @@ struct BSTNode *find_prev(struct BSTNode *node) {
     }
 }
 
-struct BSTNode *find_next(struct BSTNode *node) {
+struct BSTNode *find_next(struct BSTNode *node, struct BST *tree) {
     if(node->right != NULL) {
+        tree->num_moves++;
         node = node->right;
         while (node->left != NULL) {
+            tree->num_moves++;
             node = node->left;
         }
         return node;
     } else {
         while (node->parent != NULL && node->side == RIGHT) {
+            tree->num_moves++;
             node = node->parent;
         }
         if(node->parent == NULL) {
@@ -147,6 +162,7 @@ void swap_parent_child(struct BST *tree, struct BSTNode* parent, struct BSTNode*
 }
 
 void swap_nodes(struct BST *tree, struct BSTNode* a, struct BSTNode* b) {
+    tree->num_swaps++;
     if (a->parent == b){
         swap_parent_child(tree, b, a);
         return;
@@ -221,8 +237,10 @@ void remove_node(struct BST *tree, struct BSTNode* node) {
         free(node);
     }
     else {
+        tree->num_moves++;
         struct BSTNode *next = node->right;
         while (next->left != NULL) {
+            tree->num_moves++;
             next = next->left;
         }
         swap_nodes(tree, node, next);
