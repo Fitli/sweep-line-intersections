@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
+#include <time.h>
 #include "heap.h"
 #include "segment.h"
 #include "binsearchtree.h"
@@ -110,9 +112,9 @@ struct Segment *generate_random_segments(int num_segments) {
     return segments;
 }
 
-void find_intersections(int num_segments, struct Segment *segments, int print_output, int print_stats) {
+void find_intersections(int num_segments, struct Segment *segments, bool print_output, bool print_stats) {
     //create priority queue with all the starts and ends of the segments
-    void *point_pointers[num_segments * 2];
+    void **point_pointers = malloc(num_segments * 2 * sizeof(void*));
 
     for(int i = 0; i<num_segments; i++) {
         point_pointers[2*i] = &segments[i].start;
@@ -125,11 +127,12 @@ void find_intersections(int num_segments, struct Segment *segments, int print_ou
     struct BST segmentBST = create_empty_bst(segments_by_y);
 
     // array for storing the intersections
-    int intersect_cap = 10000000;
+    int intersect_cap = 1000000000;
     int intersect_num = 0;
     struct Point *intersections = malloc(intersect_cap * sizeof(struct Point *));
 
     // main loop
+    clock_t inittime=clock();
     struct Point last_point;
     int first_run = 1;
     while(point_heap.num_elems > 0) {
@@ -204,6 +207,7 @@ void find_intersections(int num_segments, struct Segment *segments, int print_ou
         }
 
     }
+    time_t time = clock() - inittime;
 
     // print results
     if(print_output) {
@@ -213,11 +217,12 @@ void find_intersections(int num_segments, struct Segment *segments, int print_ou
     }
 
     if(print_stats) {
-        printf("%d, %d, %d, %d\n", segmentBST.num_comparisons, segmentBST.num_swaps, segmentBST.num_moves, point_heap.num_comparisons);
+        printf("%d,%d,%ld,%d,%d,%d,%d\n", num_segments, intersect_num, time, segmentBST.num_comparisons, segmentBST.num_swaps, segmentBST.num_moves, point_heap.num_comparisons);
     }
 
     destroy_heap(&point_heap);
     free(intersections);
+    free(point_pointers);
 }
 
 int main(int argc, char *argv[]) {
@@ -225,13 +230,13 @@ int main(int argc, char *argv[]) {
 
     if(argc == 3 && strcmp(argv[1], "-i") == 0) {
         int num_segments = load_input(argv[2], &segments);
-        find_intersections(num_segments, segments, 1, 0);
+        find_intersections(num_segments, segments, true, false);
         free(segments);
     }
     else if(argc == 3 && strcmp(argv[1], "-r") == 0) {
         int num_segments = atoi(argv[2]);
         segments = generate_random_segments(num_segments);
-        find_intersections(num_segments, segments, 0, 1);
+        find_intersections(num_segments, segments, false, true);
         free(segments);
     }
     else {
